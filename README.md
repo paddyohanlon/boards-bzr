@@ -1,6 +1,10 @@
-# rethink-boards with PouchDB and CouchDB
+# rethink-boards with RethinkID
 
 This project is a Trello-like app which works with RethinkID.
+
+## TODO
+
+Ordering of tasks and columns is not working, probably because they are stored in objects, and not arrays, and order is not preserved when save to RethinkDB.
 
 ## Project setup
 
