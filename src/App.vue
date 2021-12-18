@@ -26,16 +26,12 @@ export default defineComponent({
 
     // auto sign in
     (async () => {
-      console.log("Auto sign-in:");
       const token = localStorage.getItem("token");
       const idToken = localStorage.getItem("idToken");
 
       if (token && idToken) {
         try {
-          const tokenDecoded: { sub: string } = jwt_decode(token);
           const idTokenDecoded: { sub: string; email: string; name: string } = jwt_decode(idToken);
-          console.log("- tokenDecoded", tokenDecoded);
-          console.log("- idTokenDecoded", idTokenDecoded);
           store.dispatch("autoSignIn", idTokenDecoded);
           store.dispatch("fetchBoards");
           loaded.value = true;
