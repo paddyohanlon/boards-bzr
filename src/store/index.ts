@@ -90,15 +90,14 @@ export default createStore({
 
       const payload = { tableName: BOARDS_TABLE_NAME, row: board };
       socket.emit("table:insert", payload, (response: { message?: string; error?: string }) => {
-        console.log("new board response", response);
-        console.log("create board", board);
+        console.log("table:insert response", response);
         commit("CREATE_BOARD", board);
       });
     },
     async updateBoard({ commit, getters }, board: Board): Promise<void> {
       const payload = { tableName: BOARDS_TABLE_NAME, row: board };
       socket.emit("table:replace", payload, (response: { message?: string; error?: string }) => {
-        console.log("replace response", response);
+        console.log("table:replace response", response);
         if (response.message) {
           commit("UPDATE_BOARD", { board: board, boardIndex: getters.boardIndex(board.id) });
         }
@@ -107,7 +106,7 @@ export default createStore({
     async deleteBoard({ commit, getters }, board: Board): Promise<void> {
       const payload = { tableName: BOARDS_TABLE_NAME, rowId: board.id };
       socket.emit("table:delete", payload, (response: { message?: string; error?: string }) => {
-        console.log("response", response);
+        console.log("table:delete response", response);
         if (response.message) {
           commit("DELETE_BOARD", { boardIndex: getters.boardIndex(board.id) });
         }
