@@ -73,6 +73,11 @@ export default createStore({
         console.log("fetch boards response", response);
         if (response.data) {
           commit("SET_BOARDS", response.data);
+        } else if (response.error) {
+          const createPayload = { tableName: BOARDS_TABLE_NAME };
+          socket.emit("tables:create", createPayload, (response: any) => {
+            console.log("tables:create response", response);
+          });
         }
       });
     },
