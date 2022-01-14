@@ -64,49 +64,52 @@ export default createStore({
 
       commit("SIGN_IN", openIdConnect);
     },
-    async fetchBoards({ commit, state }): Promise<void> {
+    async fetchBoards({ commit }): Promise<void> {
       console.log("fetchBoards");
 
       // Get all from 'boards' table via Socket
-      const payload = { tableName: BOARDS_TABLE_NAME, tableUserId: state.openIdConnect.userId };
-      socket.emit("table:list", payload, (response: { data: unknown[]; socketTableHandle: string }) => {
+      const payload = { tableName: BOARDS_TABLE_NAME };
+      socket.emit("table:read", payload, (response: { data?: unknown[]; error?: string }) => {
         console.log("fetch boards response", response);
-        commit("SET_BOARDS", response.data);
+        if (response.data) {
+          commit("SET_BOARDS", response.data);
+        } else if (response.error) {
+          const createPayload = { tableName: BOARDS_TABLE_NAME };
+          socket.emit("tables:create", createPayload, (response: any) => {
+            console.log("tables:create response", response);
+          });
+        }
       });
     },
-    async createBoard({ commit, state }, boardName: string): Promise<void> {
+    async createBoard({ commit }, boardName: string): Promise<void> {
       const board: Board = {
         id: uuidv4(),
         name: boardName,
         columns: {},
       };
 
-      const payload = { userId: state.openIdConnect.userId, tableName: BOARDS_TABLE_NAME, row: board };
-      socket.emit("table:row:create", payload, (response: any) => {
-        console.log("new board response", response);
-        console.log("create board", board);
+      const payload = { tableName: BOARDS_TABLE_NAME, row: board };
+      socket.emit("table:insert", payload, (response: { message?: string; error?: string }) => {
+        console.log("table:insert response", response);
         commit("CREATE_BOARD", board);
       });
     },
-    async updateBoard({ commit, state, getters }, board: Board): Promise<void> {
-      const deletePayload = { userId: state.openIdConnect.userId, tableName: BOARDS_TABLE_NAME, rowId: board.id };
-      socket.emit("table:row:delete", deletePayload, (response: any) => {
-        console.log("table:row:delete response", response);
-
-        console.log("now let's re-create");
-
-        const createPayload = { userId: state.openIdConnect.userId, tableName: BOARDS_TABLE_NAME, row: board };
-        socket.emit("table:row:create", createPayload, (response: any) => {
-          console.log("table:row:create response", response);
+    async updateBoard({ commit, getters }, board: Board): Promise<void> {
+      const payload = { tableName: BOARDS_TABLE_NAME, row: board };
+      socket.emit("table:replace", payload, (response: { message?: string; error?: string }) => {
+        console.log("table:replace response", response);
+        if (response.message) {
           commit("UPDATE_BOARD", { board: board, boardIndex: getters.boardIndex(board.id) });
-        });
+        }
       });
     },
-    async deleteBoard({ commit, state, getters }, board: Board): Promise<void> {
-      const payload = { userId: state.openIdConnect.userId, tableName: BOARDS_TABLE_NAME, rowId: board.id };
-      socket.emit("table:row:delete", payload, (response: any) => {
-        console.log("response", response);
-        commit("DELETE_BOARD", { boardIndex: getters.boardIndex(board.id) });
+    async deleteBoard({ commit, getters }, board: Board): Promise<void> {
+      const payload = { tableName: BOARDS_TABLE_NAME, rowId: board.id };
+      socket.emit("table:delete", payload, (response: { message?: string; error?: string }) => {
+        console.log("table:delete response", response);
+        if (response.message) {
+          commit("DELETE_BOARD", { boardIndex: getters.boardIndex(board.id) });
+        }
       });
     },
     createColumn({ dispatch, state, getters }, { boardId, columnName }: ActionPayloadCreateColumn): void {
