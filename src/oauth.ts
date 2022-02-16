@@ -1,11 +1,11 @@
 import ClientOAuth2 from "client-oauth2";
 
 export const oauthClient = new ClientOAuth2({
-  clientId: process.env.VUE_APP_OAUTH_CLIENT_ID,
+  clientId: process.env.VUE_APP_OAUTH_CLIENT_ID, // App ID
   accessTokenUri: process.env.VUE_APP_OAUTH_TOKEN_URI,
   authorizationUri: process.env.VUE_APP_OAUTH_AUTH_URI,
   redirectUri: process.env.VUE_APP_OAUTH_REDIRECT_URI,
-  scopes: ["openid", "name", "email"],
+  scopes: ["openid", "profile", "email"],
 });
 
 // PKCE HELPER FUNCTIONS
@@ -28,7 +28,7 @@ function sha256(plain: string) {
 
 // Base64-urlencodes the input string
 function base64urlencode(str: ArrayBuffer) {
-  // Convert the ArrayBuffer to string using Uint8 array to conver to what btoa accepts.
+  // Convert the ArrayBuffer to string using Uint8 array to convert to what btoa accepts.
   // btoa accepts chars only within ascii 0-255 and base64 encodes them.
   // Then convert the base64 encoded to base64url encoded
   //   (replace + with -, replace / with _, trim trailing =)

@@ -5,6 +5,7 @@
     <div class="card mb-4">
       <div class="card-content">
         <div class="content">
+          <div v-if="signUpEmail" class="notification is-success">Sign up with {{ signUpEmail }} successful!</div>
           <template v-if="clientUri">
             <a :href="clientUri">Sign in with RethinkID</a>
           </template>
@@ -17,12 +18,21 @@
 
 <script lang="ts">
 import { defineComponent, ref } from "vue";
+import { useRoute } from "vue-router";
 import { oauthClient, generateRandomString, pkceChallengeFromVerifier } from "@/oauth";
 
 export default defineComponent({
   name: "SignIn",
   setup() {
+    const route = useRoute();
+
     const clientUri = ref("");
+    const signUpEmail = ref("");
+
+    const signUpEmailQueryParam = route.query["sign_up_email"];
+    if (signUpEmailQueryParam && typeof signUpEmailQueryParam === "string") {
+      signUpEmail.value = signUpEmailQueryParam;
+    }
 
     if (!clientUri.value) {
       (async () => {
@@ -48,7 +58,7 @@ export default defineComponent({
       })();
     }
 
-    return { clientUri };
+    return { clientUri, signUpEmail };
   },
 });
 </script>
