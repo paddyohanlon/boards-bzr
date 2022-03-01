@@ -19,7 +19,7 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
 import { useRoute } from "vue-router";
-import { oauthClient, generateRandomString, pkceChallengeFromVerifier } from "@/oauth";
+import { rid } from "@/rethinkid";
 
 export default defineComponent({
   name: "SignIn",
@@ -36,25 +36,7 @@ export default defineComponent({
 
     if (!clientUri.value) {
       (async () => {
-        // Create and store a random "state" value
-        const state = generateRandomString();
-        console.log("state", state);
-        localStorage.setItem("pkce_state", state);
-
-        // Create and store a new PKCE code_verifier (the plaintext random secret)
-        const codeVerifier = generateRandomString();
-        localStorage.setItem("pkce_code_verifier", codeVerifier);
-
-        // Hash and base64-urlencode the secret to use as the challenge
-        const codeChallenge = await pkceChallengeFromVerifier(codeVerifier);
-
-        clientUri.value = oauthClient.code.getUri({
-          state: state,
-          query: {
-            code_challenge: codeChallenge,
-            code_challenge_method: "S256",
-          },
-        });
+        clientUri.value = await rid.logInUri();
       })();
     }
 

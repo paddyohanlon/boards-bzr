@@ -35,7 +35,7 @@
 <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
-import { signOutUtil } from "@/utils";
+import { rid } from "@/rethinkid";
 
 export default defineComponent({
   name: "AppNav",
@@ -46,7 +46,7 @@ export default defineComponent({
     const openIdConnect = computed(() => store.state.openIdConnect);
 
     function signOut(): void {
-      signOutUtil();
+      rid.logOut();
     }
 
     return { authenticated, openIdConnect, signOut };

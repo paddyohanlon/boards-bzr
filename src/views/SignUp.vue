@@ -14,13 +14,12 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { rid } from "@/rethinkid";
 
 export default defineComponent({
   name: "SignUp",
   setup() {
-    const params = new URLSearchParams();
-    params.append("redirect_uri", process.env.VUE_APP_DATA_SIGN_UP_REDIRECT_URI);
-    const signUpUri = `${process.env.VUE_APP_DATA_SIGN_UP_URL}?${params.toString()}`;
+    const signUpUri = rid.signUpUri();
     return { signUpUri };
   },
 });

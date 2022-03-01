@@ -12,8 +12,7 @@
 import { defineComponent, ref } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
-import { oauthClient } from "@/oauth";
-import jwt_decode from "jwt-decode";
+import { rid } from "@/rethinkid";
 
 export default defineComponent({
   name: "Callback",
@@ -21,69 +20,22 @@ export default defineComponent({
     const store = useStore();
     const router = useRouter();
 
-    const params = new URLSearchParams(window.location.search);
-
     // Check if the auth server returned an error string
-    const error = ref(params.get("error") || "");
-    const errorDescription = ref(params.get("error_description") || "");
+    const error = ref("");
+    const errorDescription = ref("");
 
     (async () => {
-      // Make sure the auth server returned a code
-      const code = params.get("code");
-      if (!code) {
-        error.value = "No query param code";
+      const decodedTokens = await rid.getTokens();
+
+      if (decodedTokens.error) {
+        error.value = decodedTokens.error;
+        errorDescription.value = decodedTokens.errorDescription || "";
         return;
       }
 
-      console.log(`localStorage.getItem("pkce_state")`, localStorage.getItem("pkce_state"));
-      console.log(`params.get("state")`, params.get("state"));
-
-      // Verify state matches what we set at the beginning
-      if (localStorage.getItem("pkce_state") !== params.get("state")) {
-        console.log("pkce states don't match");
-        error.value = "State did not match. Possible CSRF attack";
-      }
-
-      let getTokenResponse;
-      try {
-        getTokenResponse = await oauthClient.code.getToken(window.location.href, {
-          body: {
-            code_verifier: localStorage.getItem("pkce_code_verifier") || "",
-          },
-        });
-        console.log("getTokenResponse", getTokenResponse);
-      } catch (error) {
-        console.log("error", error);
-      }
-
-      if (!getTokenResponse) {
-        error.value = "could not get token response";
-        return;
-      }
-
-      // Clean these up since we don't need them anymore
-      localStorage.removeItem("pkce_state");
-      localStorage.removeItem("pkce_code_verifier");
-
-      // Store tokens and sign user in locally
-      const token: string = getTokenResponse.data.access_token;
-      const idToken: string = getTokenResponse.data.id_token;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("idToken", idToken);
-
-      try {
-        const tokenDecoded: { sub: string } = jwt_decode(token);
-        const idTokenDecoded = jwt_decode(idToken);
-        console.log("tokenDecoded", tokenDecoded);
-        console.log("idTokenDecoded", idTokenDecoded);
-        await store.dispatch("autoSignIn", idTokenDecoded);
-        store.dispatch("fetchBoards");
-        await router.push({ name: "home" });
-        location.reload();
-      } catch (error) {
-        console.log("token decode error:", error);
-      }
+      await store.dispatch("autoSignIn", decodedTokens.idTokenDecoded);
+      store.dispatch("fetchBoards");
+      await router.push({ name: "home" });
     })();
 
     return { error, errorDescription };

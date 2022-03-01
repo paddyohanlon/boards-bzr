@@ -16,7 +16,7 @@ import {
   ActionPayloadDeleteTask,
   ActionPayloadMoveTask,
 } from "@/types";
-import socket from "@/socket";
+import { rid } from "@/rethinkid";
 
 const initialBoards: Board[] = [];
 
@@ -58,28 +58,20 @@ export default createStore({
         name,
       };
 
-      socket.auth = {
-        token: localStorage.getItem("token"),
-      };
-
       commit("SIGN_IN", openIdConnect);
     },
     async fetchBoards({ commit }): Promise<void> {
-      console.log("fetchBoards");
-
-      // Get all from 'boards' table via Socket
-      const payload = { tableName: BOARDS_TABLE_NAME };
-      socket.emit("table:read", payload, (response: { data?: unknown[]; error?: string }) => {
-        console.log("fetch boards response", response);
-        if (response.data) {
-          commit("SET_BOARDS", response.data);
-        } else if (response.error) {
-          const createPayload = { tableName: BOARDS_TABLE_NAME };
-          socket.emit("tables:create", createPayload, (response: any) => {
-            console.log("tables:create response", response);
-          });
-        }
-      });
+      try {
+        console.log("fetchBoards");
+        // Get all from 'boards' table
+        const readResponse = await rid.tableRead(BOARDS_TABLE_NAME);
+        commit("SET_BOARDS", readResponse.data);
+        console.log("readResponse", readResponse);
+      } catch (e: any) {
+        // Assume table doesn't exist
+        const createResponse = await rid.tablesCreate(BOARDS_TABLE_NAME);
+        console.log("createResponse", createResponse);
+      }
     },
     async createBoard({ commit }, boardName: string): Promise<void> {
       const board: Board = {
@@ -88,29 +80,23 @@ export default createStore({
         columns: {},
       };
 
-      const payload = { tableName: BOARDS_TABLE_NAME, row: board };
-      socket.emit("table:insert", payload, (response: { message?: string; error?: string }) => {
-        console.log("table:insert response", response);
-        commit("CREATE_BOARD", board);
-      });
+      const response = await rid.tableInsert(BOARDS_TABLE_NAME, board);
+      console.log("table:insert response", response);
+      commit("CREATE_BOARD", board);
     },
     async updateBoard({ commit, getters }, board: Board): Promise<void> {
-      const payload = { tableName: BOARDS_TABLE_NAME, row: board };
-      socket.emit("table:replace", payload, (response: { message?: string; error?: string }) => {
-        console.log("table:replace response", response);
-        if (response.message) {
-          commit("UPDATE_BOARD", { board: board, boardIndex: getters.boardIndex(board.id) });
-        }
-      });
+      const response = await rid.tableReplace(BOARDS_TABLE_NAME, board);
+      console.log("table:replace response", response);
+      if (response.message) {
+        commit("UPDATE_BOARD", { board: board, boardIndex: getters.boardIndex(board.id) });
+      }
     },
     async deleteBoard({ commit, getters }, board: Board): Promise<void> {
-      const payload = { tableName: BOARDS_TABLE_NAME, rowId: board.id };
-      socket.emit("table:delete", payload, (response: { message?: string; error?: string }) => {
-        console.log("table:delete response", response);
-        if (response.message) {
-          commit("DELETE_BOARD", { boardIndex: getters.boardIndex(board.id) });
-        }
-      });
+      const response = await rid.tableDelete(BOARDS_TABLE_NAME, board.id);
+      console.log("table:delete response", response);
+      if (response.message) {
+        commit("DELETE_BOARD", { boardIndex: getters.boardIndex(board.id) });
+      }
     },
     createColumn({ dispatch, state, getters }, { boardId, columnName }: ActionPayloadCreateColumn): void {
       const columnId = uuidv4();

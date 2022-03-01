@@ -8,7 +8,7 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
 import { useStore } from "vuex";
-import jwt_decode from "jwt-decode";
+import { rid } from "@/rethinkid";
 import useModals from "@/composables/modals";
 import AppNav from "@/components/AppNav.vue";
 import AppServiceWorkerNotification from "@/components/AppServiceWorkerNotification.vue";
@@ -24,25 +24,14 @@ export default defineComponent({
 
     const loaded = ref(false);
 
-    // auto sign in
+    // auto-log in
     (async () => {
-      const token = localStorage.getItem("token");
-      const idToken = localStorage.getItem("idToken");
-
-      if (token && idToken) {
-        try {
-          const idTokenDecoded: { sub: string; email: string; name: string } = jwt_decode(idToken);
-          store.dispatch("autoSignIn", idTokenDecoded);
-          store.dispatch("fetchBoards");
-          loaded.value = true;
-        } catch (error) {
-          console.log("token decode error:", error);
-          localStorage.removeItem("token");
-          loaded.value = true;
-        }
-      } else {
-        loaded.value = true;
+      const loggedIn = rid.isLoggedIn();
+      if (loggedIn && loggedIn.idTokenDecoded) {
+        await store.dispatch("autoSignIn", loggedIn.idTokenDecoded);
+        await store.dispatch("fetchBoards");
       }
+      loaded.value = true;
     })();
 
     const { isModalOpen } = useModals;
