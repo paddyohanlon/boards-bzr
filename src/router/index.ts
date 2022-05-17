@@ -5,23 +5,11 @@ import BoardUpdate from "../views/BoardUpdate.vue";
 import ColumnUpdate from "../views/ColumnUpdate.vue";
 import TaskUpdate from "../views/TaskUpdate.vue";
 import NotFound from "../views/NotFound.vue";
-import SignUp from "../views/SignUp.vue";
-import SignIn from "../views/SignIn.vue";
 import Callback from "../views/Callback.vue";
 
+import { rid } from "@/rethinkid";
+
 const routes: Array<RouteRecordRaw> = [
-  {
-    path: "/sign-up",
-    name: "signUp",
-    component: SignUp,
-    meta: { requiresAuth: false },
-  },
-  {
-    path: "/sign-in",
-    name: "signIn",
-    component: SignIn,
-    meta: { requiresAuth: false },
-  },
   {
     path: "/callback",
     name: "callback",
@@ -57,6 +45,7 @@ const routes: Array<RouteRecordRaw> = [
     path: "/",
     name: "home",
     component: Boards,
+    meta: { requiresAuth: false },
   },
   {
     path: "/:catchAll(.*)",
@@ -73,9 +62,9 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   // If route requires auth
   if (to.matched.some((record) => record.meta.requiresAuth !== false)) {
-    if (!localStorage.getItem("token")) {
+    if (!rid.isLoggedIn()) {
       // Redirect to the sign in view if no token found and route requires auth
-      next({ name: "signIn" });
+      next({ name: "home" });
       return;
     }
   }

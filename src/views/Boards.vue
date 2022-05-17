@@ -1,33 +1,57 @@
 <template>
   <div class="board">
-    <div class="columns-grid" aria-live="polite">
-      <div v-for="board in boards" :key="board.id" class="card is-clickable" role="button" @click="goToBoard(board.id)">
-        <div class="card-content">
-          <h2 class="title is-4">{{ board.name }}</h2>
-        </div>
-      </div>
-      <BoardCreate />
+    <div v-if="!authenticated">
+      <a class="button is-primary" :href="logInUri">Sign in or create an account</a>
     </div>
+    <template v-else>
+      <div class="columns-grid" aria-live="polite">
+        <div
+          v-for="board in boards"
+          :key="board.id"
+          class="card is-clickable"
+          role="button"
+          @click="goToBoard(board.id)"
+        >
+          <div class="card-content">
+            <h2 class="title is-4">{{ board.name }}</h2>
+          </div>
+        </div>
+        <BoardCreate />
+      </div>
+    </template>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import { mapState } from "vuex";
+import { defineComponent, ref, computed } from "vue";
+import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 import BoardCreate from "@/components/BoardCreate.vue";
+import { rid } from "@/rethinkid";
 
 export default defineComponent({
   name: "Boards",
   components: {
     BoardCreate,
   },
-  computed: {
-    ...mapState(["boards"]),
-  },
-  methods: {
-    goToBoard(boardId: string): void {
-      this.$router.push({ name: "board", params: { boardId } });
-    },
+  setup() {
+    const store = useStore();
+    const router = useRouter();
+
+    const logInUri = ref("");
+
+    (async () => {
+      logInUri.value = await rid.logInUri();
+    })();
+
+    const authenticated = computed(() => store.state.authenticated);
+    const boards = computed(() => store.state.boards);
+
+    function goToBoard(boardId: string): void {
+      router.push({ name: "board", params: { boardId } });
+    }
+
+    return { logInUri, authenticated, boards, goToBoard };
   },
 });
 </script>
