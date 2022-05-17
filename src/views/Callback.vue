@@ -1,15 +1,11 @@
 <template>
   <div class="small-container">
-    <h1 class="title is-1">Authenticating...</h1>
-    <div v-if="error" class="notification is-danger">
-      <h2>{{ error }}</h2>
-      <p>{{ errorDescription }}</p>
-    </div>
+    <p>Signing in...</p>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import { rid } from "@/rethinkid";
@@ -20,25 +16,16 @@ export default defineComponent({
     const store = useStore();
     const router = useRouter();
 
-    // Check if the auth server returned an error string
-    const error = ref("");
-    const errorDescription = ref("");
-
     (async () => {
-      const decodedTokens = await rid.getTokens();
-
-      if (decodedTokens.error) {
-        error.value = decodedTokens.error;
-        errorDescription.value = decodedTokens.errorDescription || "";
-        return;
+      try {
+        await rid.completeLogIn();
+        store.dispatch("autoSignIn");
+      } catch (e) {
+        console.error("Sign in callback error:", e);
       }
 
-      await store.dispatch("autoSignIn", decodedTokens.idTokenDecoded);
-      store.dispatch("fetchBoards");
-      await router.push({ name: "home" });
+      router.push({ name: "home" });
     })();
-
-    return { error, errorDescription };
   },
 });
 </script>

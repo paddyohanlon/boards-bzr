@@ -1,14 +1,13 @@
 <template>
   <AppNav />
   <router-view v-if="loaded" :aria-hidden="isModalOpen" />
-  <div v-else>Loading...</div>
+  <div class="loading" v-else>Loading...</div>
   <AppServiceWorkerNotification />
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent, computed } from "vue";
 import { useStore } from "vuex";
-import { rid } from "@/rethinkid";
 import useModals from "@/composables/modals";
 import AppNav from "@/components/AppNav.vue";
 import AppServiceWorkerNotification from "@/components/AppServiceWorkerNotification.vue";
@@ -22,17 +21,9 @@ export default defineComponent({
   setup() {
     const store = useStore();
 
-    const loaded = ref(false);
+    const loaded = computed(() => store.state.loaded);
 
-    // auto-log in
-    (async () => {
-      const loggedIn = rid.isLoggedIn();
-      if (loggedIn && loggedIn.idTokenDecoded) {
-        await store.dispatch("autoSignIn", loggedIn.idTokenDecoded);
-        await store.dispatch("fetchBoards");
-      }
-      loaded.value = true;
-    })();
+    store.dispatch("autoSignIn");
 
     const { isModalOpen } = useModals;
 
@@ -67,5 +58,10 @@ html {
 .small-container {
   margin: 0 auto;
   max-width: 440px;
+}
+
+.loading {
+  color: white;
+  padding: 1em;
 }
 </style>

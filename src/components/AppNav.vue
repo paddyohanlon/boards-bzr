@@ -18,12 +18,8 @@
         <div class="navbar-item">
           <div class="buttons">
             <template v-if="authenticated">
-              <div class="button">{{ openIdConnect.email }}</div>
+              <div class="button">{{ user.email }}</div>
               <button class="button" @click="signOut">Sign out</button>
-            </template>
-            <template v-else>
-              <router-link :to="{ name: 'signUp' }" class="button is-primary">Sign up</router-link>
-              <router-link :to="{ name: 'signIn' }" class="button is-light">Sign in</router-link>
             </template>
           </div>
         </div>
@@ -43,13 +39,13 @@ export default defineComponent({
     const store = useStore();
 
     const authenticated = computed(() => store.state.authenticated);
-    const openIdConnect = computed(() => store.state.openIdConnect);
+    const user = computed(() => store.state.user);
 
     function signOut(): void {
       rid.logOut();
     }
 
-    return { authenticated, openIdConnect, signOut };
+    return { authenticated, user, signOut };
   },
 });
 </script>
