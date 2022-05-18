@@ -38,12 +38,16 @@ export default defineComponent({
     const { getStringFromParam } = useRouterParams;
 
     const boardId = getStringFromParam(route.params.boardId);
-    const boardIndex = store.getters.boardIndex(boardId);
     const columnId = getStringFromParam(route.params.columnId);
     const taskId = getStringFromParam(route.params.taskId);
 
+    const board = store.getters.boardById(boardId);
+    const columnIndex = store.getters.indexById(board.columns, columnId);
+    const tasks = board.columns[columnIndex].tasks;
+    const taskIndex = store.getters.indexById(tasks, taskId);
+
     const task: ComputedRef<Task | undefined> = computed(() => {
-      return store.state.boards[boardIndex].columns[columnId].tasks[taskId];
+      return board.columns[columnIndex].tasks[taskIndex];
     });
 
     const updateTask: ComputedRef<Task> = computed(() => {

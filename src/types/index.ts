@@ -17,21 +17,13 @@ export type User = {
 export type Board = {
   id: string;
   name: string;
-  columns: Columns;
-};
-
-export type Columns = {
-  [columnId: string]: Column;
+  columns: Column[];
 };
 
 export type Column = {
   id: string;
   name: string;
-  tasks: Tasks;
-};
-
-export type Tasks = {
-  [taskId: string]: Task;
+  tasks: Task[];
 };
 
 export type Task = {

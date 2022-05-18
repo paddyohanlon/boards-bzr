@@ -39,11 +39,13 @@ export default defineComponent({
     const { getStringFromParam } = useRouterParams;
 
     const boardId = getStringFromParam(route.params.boardId);
-    const boardIndex = store.getters.boardIndex(boardId);
     const columnId = getStringFromParam(route.params.columnId);
 
+    const board = store.getters.boardById(boardId);
+    const columnIndex = store.getters.indexById(board.columns, columnId);
+
     const column: ComputedRef<Column | undefined> = computed(() => {
-      return store.state.boards[boardIndex].columns[columnId];
+      return board.columns[columnIndex];
     });
 
     const updateColumn: ComputedRef<Column> = computed(() => {
