@@ -6,7 +6,7 @@
     @click="goToTask()"
     draggable="true"
     @dragstart="dragstartTask($event, columnId, task.id)"
-    @drop.stop="dropTaskOrColumn($event, $route.params.boardId, columnId, task.id)"
+    @drop.stop="dropTaskOrColumn($event, boardId, columnId, task.id)"
     @dragover.prevent
     @dragenter.prevent
   >
@@ -19,15 +19,16 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import useDragAndDrop from "@/composables/drag-and-drop";
-import { Task, Tasks } from "@/types";
+import useRouterParams from "@/composables/router-params";
+import { Task } from "@/types";
 
 export default defineComponent({
   name: "TaskItem",
   props: {
     tasks: {
-      type: Object as PropType<Tasks>,
+      type: Object as PropType<Task[]>,
       required: true,
     },
     columnId: {
@@ -40,9 +41,13 @@ export default defineComponent({
     },
   },
   setup(props) {
+    const route = useRoute();
     const router = useRouter();
 
     const { dragstartTask, dropTaskOrColumn } = useDragAndDrop;
+    const { getStringFromParam } = useRouterParams;
+
+    const boardId = getStringFromParam(route.params.boardId);
 
     function goToTask(): void {
       router.push({
@@ -51,7 +56,7 @@ export default defineComponent({
       });
     }
 
-    return { dragstartTask, dropTaskOrColumn, goToTask };
+    return { boardId, dragstartTask, dropTaskOrColumn, goToTask };
   },
 });
 </script>
