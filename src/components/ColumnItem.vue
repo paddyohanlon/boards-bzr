@@ -2,7 +2,7 @@
   <div
     draggable="true"
     @dragstart.self="dragstartColumn($event, column.id)"
-    @drop="dropTaskOrColumn($event, $route.params.boardId, column.id)"
+    @drop="dropTaskOrColumn($event, boardId, column.id)"
     @dragover.prevent
     @dragenter.prevent
   >
@@ -32,8 +32,9 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import useDragAndDrop from "@/composables/drag-and-drop";
+import useRouterParams from "@/composables/router-params";
 import { Column } from "@/types";
 import TaskItem from "@/components/TaskItem.vue";
 import TaskCreate from "@/components/TaskCreate.vue";
@@ -51,9 +52,13 @@ export default defineComponent({
     },
   },
   setup(props) {
+    const route = useRoute();
     const router = useRouter();
 
     const { dragstartColumn, dropTaskOrColumn } = useDragAndDrop;
+    const { getStringFromParam } = useRouterParams;
+
+    const boardId = getStringFromParam(route.params.boardId);
 
     function goToColumnUpdate(): void {
       router.push({
@@ -63,6 +68,7 @@ export default defineComponent({
     }
 
     return {
+      boardId,
       dragstartColumn,
       dropTaskOrColumn,
       goToColumnUpdate,

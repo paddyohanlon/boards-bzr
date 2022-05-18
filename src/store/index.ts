@@ -5,9 +5,7 @@ import {
   User,
   Board,
   Column,
-  Columns,
   Task,
-  Tasks,
   ActionPayloadCreateColumn,
   ActionPayloadUpdateColumn,
   ActionPayloadDeleteColumn,
@@ -94,7 +92,7 @@ export default createStore({
       const board: Board = {
         id: uuidv4(),
         name: boardName,
-        columns: {},
+        columns: [],
       };
 
       const response = await state.boardsTable.insert(board);
@@ -115,83 +113,53 @@ export default createStore({
         commit("DELETE_BOARD", { boardIndex: getters.boardIndex(board.id) });
       }
     },
-    createColumn({ dispatch, state, getters }, { boardId, columnName }: ActionPayloadCreateColumn): void {
+    createColumn({ dispatch, getters }, { boardId, columnName }: ActionPayloadCreateColumn): void {
       const columnId = uuidv4();
+      const initialTasks = [] as Task[];
       const column: Column = {
         id: columnId,
         name: columnName,
-        tasks: {},
+        tasks: initialTasks,
       };
 
-      const boardIndex = getters.boardIndex(boardId);
-
-      const board = state.boards[boardIndex];
-      board.columns[columnId] = column;
+      const board = getters.boardById(boardId);
+      board.columns.push(column);
 
       dispatch("updateBoard", board as Board);
     },
-    updateColumn({ dispatch, state, getters }, { boardId, updateColumn }: ActionPayloadUpdateColumn): void {
-      const boardIndex = getters.boardIndex(boardId);
-      const board = state.boards[boardIndex];
-      board.columns[updateColumn.id] = updateColumn;
+    updateColumn({ dispatch, getters }, { boardId, updateColumn }: ActionPayloadUpdateColumn): void {
+      const board = getters.boardById(boardId);
+      const columnIndex = getters.indexById(board.columns, updateColumn.id);
+      board.columns.splice(columnIndex, 1, updateColumn);
 
       dispatch("updateBoard", board as Board);
     },
-    deleteColumn({ dispatch, state, getters }, { boardId, columnId }: ActionPayloadDeleteColumn): void {
-      const boardIndex = getters.boardIndex(boardId);
-
-      const board = state.boards[boardIndex];
-      delete board.columns[columnId];
+    deleteColumn({ dispatch, getters }, { boardId, columnId }: ActionPayloadDeleteColumn): void {
+      const board = getters.boardById(boardId);
+      const columnIndex = getters.indexById(board.columns, columnId);
+      board.columns.splice(columnIndex, 1);
 
       dispatch("updateBoard", board as Board);
     },
-    moveColumn({ dispatch, state, getters }, { boardId, fromColumnId, toColumnId }: ActionPayloadMoveColumn): void {
+    moveColumn({ dispatch, getters }, { boardId, fromColumnId, toColumnId }: ActionPayloadMoveColumn): void {
       // Do not move to the same place
       if (fromColumnId === toColumnId) {
         return;
       }
 
-      const boardIndex = getters.boardIndex(boardId);
+      const board = getters.boardById(boardId);
+      const columns = board.columns as Column[];
 
-      const columns = state.boards[boardIndex].columns;
+      const fromColumnIndex = getters.indexById(columns, fromColumnId);
+      const toColumnIndex = getters.indexById(columns, toColumnId);
 
-      // Create a new columns object with the desired order
-      const columnsReordered: Columns = {};
-
-      // Determine whether column should be moved before or after the 'to column'
-      let fromColumnIsBeforeTo = false;
-
-      for (const columnId in columns) {
-        if (columnId === fromColumnId) {
-          // Found the `from column`
-          fromColumnIsBeforeTo = true;
-          continue;
-        }
-
-        if (columnId === toColumnId) {
-          // Found the `to column`
-          if (fromColumnIsBeforeTo) {
-            // If before, move after
-            columnsReordered[columnId] = columns[columnId];
-            columnsReordered[fromColumnId] = columns[fromColumnId];
-          } else {
-            // If after, move before
-            columnsReordered[fromColumnId] = columns[fromColumnId];
-            columnsReordered[columnId] = columns[columnId];
-          }
-          continue;
-        }
-
-        // Otherwise put column in the same place
-        columnsReordered[columnId] = columns[columnId];
-      }
-
-      const board = state.boards[boardIndex];
-      board.columns = columnsReordered;
+      const columnToMove = columns[fromColumnIndex];
+      columns.splice(fromColumnIndex, 1);
+      columns.splice(toColumnIndex, 0, columnToMove);
 
       dispatch("updateBoard", board as Board);
     },
-    createTask({ dispatch, state, getters }, { boardId, columnId, taskName }: ActionPayloadCreateTask): void {
+    createTask({ dispatch, getters }, { boardId, columnId, taskName }: ActionPayloadCreateTask): void {
       const taskId = uuidv4();
       const task: Task = {
         id: taskId,
@@ -199,29 +167,32 @@ export default createStore({
         description: "",
       };
 
-      const boardIndex = getters.boardIndex(boardId);
-
-      const board = state.boards[boardIndex];
-      board.columns[columnId].tasks[taskId] = task;
-
-      dispatch("updateBoard", board as Board);
-    },
-    updateTask({ dispatch, state, getters }, { boardId, columnId, updateTask }: ActionPayloadUpdateTask): void {
-      const boardIndex = getters.boardIndex(boardId);
-      const board = state.boards[boardIndex];
-      board.columns[columnId].tasks[updateTask.id] = updateTask;
+      const board = getters.boardById(boardId);
+      const columnIndex = getters.indexById(board.columns, columnId);
+      board.columns[columnIndex].tasks.push(task);
 
       dispatch("updateBoard", board as Board);
     },
-    deleteTask({ dispatch, state, getters }, { boardId, columnId, taskId }: ActionPayloadDeleteTask): void {
-      const boardIndex = getters.boardIndex(boardId);
-      const board = state.boards[boardIndex];
-      delete board.columns[columnId].tasks[taskId];
+    updateTask({ dispatch, getters }, { boardId, columnId, updateTask }: ActionPayloadUpdateTask): void {
+      const board = getters.boardById(boardId);
+      const columnIndex = getters.indexById(board.columns, columnId);
+      const tasks = board.columns[columnIndex].tasks;
+      const taskIndex = getters.indexById(tasks, updateTask.id);
+      tasks.splice(taskIndex, 1, updateTask);
+
+      dispatch("updateBoard", board as Board);
+    },
+    deleteTask({ dispatch, getters }, { boardId, columnId, taskId }: ActionPayloadDeleteTask): void {
+      const board = getters.boardById(boardId);
+      const columnIndex = getters.indexById(board.columns, columnId);
+      const tasks = board.columns[columnIndex].tasks;
+      const taskIndex = getters.indexById(tasks, taskId);
+      tasks.splice(taskIndex, 1);
 
       dispatch("updateBoard", board as Board);
     },
     moveTask(
-      { dispatch, state, getters },
+      { dispatch, getters },
       { boardId, fromColumnId, fromTaskId, toColumnId, toTaskId }: ActionPayloadMoveTask,
     ): void {
       // Do not move to the same place
@@ -229,56 +200,20 @@ export default createStore({
         return;
       }
 
-      const boardIndex = getters.boardIndex(boardId);
+      const board = getters.boardById(boardId);
 
-      const fromTasks = state.boards[boardIndex].columns[fromColumnId].tasks;
-      const fromTask = state.boards[boardIndex].columns[fromColumnId].tasks[fromTaskId];
+      const fromColumnIndex = getters.indexById(board.columns, fromColumnId);
+      const fromTasks = board.columns[fromColumnIndex].tasks;
+      const fromTaskIndex = getters.indexById(fromTasks, fromTaskId);
 
-      const toTasks = state.boards[boardIndex].columns[toColumnId].tasks;
+      const toColumnIndex = getters.indexById(board.columns, toColumnId);
+      const toTasks = board.columns[toColumnIndex].tasks;
+      const toTaskIndex = getters.indexById(toTasks, toTaskId);
 
-      // Create a new tasks object with the desired order
-      const updatedToTasks: Tasks = {};
-
-      // Determine whether task should be moved before or after another
-      let fromTaskIsBeforeTo = false;
-
-      for (const taskId in toTasks) {
-        if (taskId === fromTaskId) {
-          // Found the `from task`
-          fromTaskIsBeforeTo = true;
-          continue;
-        }
-
-        if (taskId === toTaskId) {
-          // Found the `to task`
-          if (fromTaskIsBeforeTo) {
-            // If before, move after
-            updatedToTasks[taskId] = toTasks[taskId];
-            updatedToTasks[fromTaskId] = fromTasks[fromTaskId];
-          } else {
-            // If after, move before
-            updatedToTasks[fromTaskId] = fromTasks[fromTaskId];
-            updatedToTasks[taskId] = toTasks[taskId];
-          }
-          continue;
-        }
-
-        // Otherwise put task in the same place
-        updatedToTasks[taskId] = toTasks[taskId];
-      }
-
-      // If no ID is present, we are dropping a task on a column, so add task to the end of the list
-      if (!toTaskId) {
-        updatedToTasks[fromTaskId] = fromTask;
-      }
-
-      const board = state.boards[boardIndex];
-      board.columns[toColumnId].tasks = updatedToTasks;
-
-      // delete from task after moving to different column
-      if (fromColumnId !== toColumnId) {
-        delete board.columns[fromColumnId].tasks[fromTaskId];
-      }
+      // TODO function arraymove(arr, fromIndex, toIndex)
+      const taskToMove = fromTasks[fromTaskIndex];
+      fromTasks.splice(fromTaskIndex, 1);
+      toTasks.splice(toTaskIndex, 0, taskToMove);
 
       dispatch("updateBoard", board as Board);
     },
@@ -286,6 +221,14 @@ export default createStore({
   getters: {
     boardIndex: (state) => (boardId: string) => {
       return state.boards.findIndex((board) => board.id === boardId);
+    },
+    // For all non-board indexes
+    indexById: () => (array: { id: string }[], id: string) => {
+      return array.findIndex((item) => item.id === id);
+    },
+    boardById: (state, getters) => (boardId: string) => {
+      const index = getters.indexById(state.boards, boardId);
+      return state.boards[index];
     },
   },
   modules: {},
