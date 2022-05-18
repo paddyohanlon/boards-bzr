@@ -1,7 +1,5 @@
 <template>
-  <div class="small-container">
-    <p>Signing in...</p>
-  </div>
+  <div class="loading">Signing in...</div>
 </template>
 
 <script lang="ts">
