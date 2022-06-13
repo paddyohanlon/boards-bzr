@@ -1,7 +1,7 @@
 <template>
   <div class="board">
     <div v-if="!authenticated">
-      <a class="button is-primary" :href="logInUri">Sign in or create an account</a>
+      <a class="button is-primary" :href="loginUri">Sign in or create an account</a>
     </div>
     <template v-else>
       <div class="columns-grid" aria-live="polite">
@@ -38,10 +38,10 @@ export default defineComponent({
     const store = useStore();
     const router = useRouter();
 
-    const logInUri = ref("");
+    const loginUri = ref("");
 
     (async () => {
-      logInUri.value = await rid.logInUri();
+      loginUri.value = await rid.loginUri();
     })();
 
     const authenticated = computed(() => store.state.authenticated);
@@ -51,7 +51,7 @@ export default defineComponent({
       router.push({ name: "board", params: { boardId } });
     }
 
-    return { logInUri, authenticated, boards, goToBoard };
+    return { loginUri, authenticated, boards, goToBoard };
   },
 });
 </script>
