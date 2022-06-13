@@ -16,7 +16,7 @@ export default defineComponent({
 
     (async () => {
       try {
-        await rid.completeLogIn();
+        await rid.completeLogin();
         store.dispatch("autoSignIn");
       } catch (e) {
         console.error("Sign in callback error:", e);
