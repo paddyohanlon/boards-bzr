@@ -22,9 +22,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, watch } from "vue";
+import store from "@/store";
+import { computed, defineComponent, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import useModals from "@/composables/modals";
 
 export default defineComponent({
   name: "BoardModal",
@@ -36,7 +36,7 @@ export default defineComponent({
       router.push({ name: "board" });
     }
 
-    const { isModalOpen } = useModals;
+    const isModalOpen = computed(() => store.state.isModalOpen);
 
     const escapeListener = (e: KeyboardEvent) => {
       if (e.code === "Escape") {

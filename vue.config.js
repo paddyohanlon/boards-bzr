@@ -1,14 +1,14 @@
 module.exports = {
   chainWebpack: (config) => {
     config.plugin("html").tap((args) => {
-      args[0].title = "Trello Clone";
+      args[0].title = "Bazaar Boards";
       return args;
     });
   },
   css: {
     loaderOptions: {
       sass: {
-        prependData: `
+        additionalData: `
           @import "@/scss/_global-variables.scss";
         `,
       },

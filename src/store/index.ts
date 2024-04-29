@@ -15,11 +15,9 @@ import {
   ActionPayloadDeleteTask,
   ActionPayloadMoveTask,
 } from "@/types";
-import { rid } from "@/rethinkid";
+import { boardsCollection, bzr } from "@/bzr";
 
 const initialBoards: Board[] = [];
-
-const BOARDS_TABLE_NAME = "boards";
 
 const state: State = {
   loaded: false,
@@ -30,7 +28,7 @@ const state: State = {
     name: "",
   },
   boards: initialBoards,
-  boardsTable: rid.table(BOARDS_TABLE_NAME, {}),
+  isModalOpen: false,
 };
 
 export default createStore({
@@ -38,6 +36,9 @@ export default createStore({
   mutations: {
     SET_LOADED: (state, loaded: boolean) => {
       state.loaded = loaded;
+    },
+    SET_IS_MODAL_OPEN: (state, isOpen: boolean) => {
+      state.isModalOpen = isOpen;
     },
     SIGN_IN: (state, user: User) => {
       state.authenticated = true;
@@ -58,9 +59,9 @@ export default createStore({
   },
   actions: {
     async autoSignIn({ commit, dispatch }) {
-      if (rid.isLoggedIn()) {
+      if (bzr.isLoggedIn()) {
         try {
-          const user = rid.userInfo();
+          const user = await bzr.social.getUser();
           console.log("user", user);
           commit("SIGN_IN", user);
 
@@ -74,18 +75,18 @@ export default createStore({
         commit("SET_LOADED", true);
       }
     },
-    async fetchBoards({ commit, state }): Promise<void> {
+    setIsModalOpen({ commit }, isOpen: boolean) {
+      commit("SET_IS_MODAL_OPEN", isOpen);
+    },
+    async fetchBoards({ commit }): Promise<void> {
       try {
         console.log("fetchBoards");
         // Get all from 'boards' table
-        const readResponse = await state.boardsTable.read();
-        commit("SET_BOARDS", readResponse.data);
+        const readResponse = await boardsCollection.getAll();
+        commit("SET_BOARDS", readResponse);
         console.log("readResponse", readResponse);
       } catch (e: any) {
         console.log("fetchBoards error", e);
-        // Assume table doesn't exist
-        const createResponse = await rid.tablesCreate(BOARDS_TABLE_NAME);
-        console.log("createResponse", createResponse);
       }
     },
     async createBoard({ commit }, boardName: string): Promise<void> {
@@ -95,19 +96,19 @@ export default createStore({
         columns: [],
       };
 
-      const response = await state.boardsTable.insert(board);
+      const response = await boardsCollection.insertOne(board);
       console.log("table:insert response", response);
       commit("CREATE_BOARD", board);
     },
     async updateBoard({ commit, getters }, board: Board): Promise<void> {
-      const response = await state.boardsTable.replace(board);
+      const response = await boardsCollection.replaceOne(board.id, board);
       console.log("table:replace response", response);
       if (response.message) {
         commit("UPDATE_BOARD", { board: board, boardIndex: getters.boardIndex(board.id) });
       }
     },
     async deleteBoard({ commit, getters }, board: Board): Promise<void> {
-      const response = await state.boardsTable.delete({ rowId: board.id });
+      const response = await boardsCollection.deleteOne(board.id);
       console.log("table:delete response", response);
       if (response.message) {
         commit("DELETE_BOARD", { boardIndex: getters.boardIndex(board.id) });

@@ -6,11 +6,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from "vue";
+import { defineComponent, computed, watch } from "vue";
 import { useStore } from "vuex";
-import useModals from "@/composables/modals";
 import AppNav from "@/components/AppNav.vue";
 import AppServiceWorkerNotification from "@/components/AppServiceWorkerNotification.vue";
+import { bzr } from "./bzr";
+import { useRoute } from "vue-router";
 
 export default defineComponent({
   name: "App",
@@ -20,12 +21,22 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const route = useRoute();
+
+    watch(
+      () => route.meta.isDisplayedInModal,
+      (isDisplayedInModal) => {
+        console.log("watch isDisplayedInModal", isDisplayedInModal);
+        store.dispatch("setIsModalOpen", isDisplayedInModal || false)
+      },
+    );
 
     const loaded = computed(() => store.state.loaded);
+    const isModalOpen = computed(() => store.state.isModalOpen);
 
     store.dispatch("autoSignIn");
 
-    const { isModalOpen } = useModals;
+    bzr.onLogin(async () => store.dispatch("autoSignIn"));
 
     return { isModalOpen, loaded };
   },

@@ -1,25 +1,18 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
-import Boards from "../views/Boards.vue";
-import Board from "../views/Board.vue";
+import BoardsView from "../views/BoardsView.vue";
+import BoardView from "../views/BoardView.vue";
 import BoardUpdate from "../views/BoardUpdate.vue";
 import ColumnUpdate from "../views/ColumnUpdate.vue";
 import TaskUpdate from "../views/TaskUpdate.vue";
 import NotFound from "../views/NotFound.vue";
-import Callback from "../views/Callback.vue";
 
-import { rid } from "@/rethinkid";
+import { bzr } from "@/bzr";
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: "/callback",
-    name: "callback",
-    component: Callback,
-    meta: { requiresAuth: false },
-  },
-  {
     path: "/board/:boardId",
     name: "board",
-    component: Board,
+    component: BoardView,
     children: [
       {
         path: "update",
@@ -44,7 +37,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: "home",
-    component: Boards,
+    component: BoardsView,
     meta: { requiresAuth: false },
   },
   {
@@ -62,7 +55,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   // If route requires auth
   if (to.matched.some((record) => record.meta.requiresAuth !== false)) {
-    if (!rid.isLoggedIn()) {
+    if (!bzr.isLoggedIn()) {
       // Redirect to the sign in view if no token found and route requires auth
       next({ name: "home" });
       return;

@@ -1,11 +1,9 @@
-import { Table } from "@mostlytyped/rethinkid-js-sdk/dist/types/table";
-
 export type State = {
   loaded: boolean;
   authenticated: boolean;
   user: User;
   boards: Board[];
-  boardsTable: Table;
+  isModalOpen: boolean;
 };
 
 export type User = {

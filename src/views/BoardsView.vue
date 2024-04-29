@@ -1,7 +1,7 @@
 <template>
   <div class="board">
     <div v-if="!authenticated">
-      <a class="button is-primary" :href="loginUri">Sign in or create an account</a>
+      <button class="button is-primary" @click="bzr.login">Sign in or create an account</button>
     </div>
     <template v-else>
       <div class="columns-grid" aria-live="polite">
@@ -23,26 +23,20 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent, computed } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import BoardCreate from "@/components/BoardCreate.vue";
-import { rid } from "@/rethinkid";
+import { bzr } from "@/bzr";
 
 export default defineComponent({
-  name: "Boards",
+  name: "BoardsView",
   components: {
     BoardCreate,
   },
   setup() {
     const store = useStore();
     const router = useRouter();
-
-    const loginUri = ref("");
-
-    (async () => {
-      loginUri.value = await rid.loginUri();
-    })();
 
     const authenticated = computed(() => store.state.authenticated);
     const boards = computed(() => store.state.boards);
@@ -51,7 +45,7 @@ export default defineComponent({
       router.push({ name: "board", params: { boardId } });
     }
 
-    return { loginUri, authenticated, boards, goToBoard };
+    return { authenticated, boards, goToBoard, bzr };
   },
 });
 </script>
@@ -70,3 +64,4 @@ export default defineComponent({
   overflow-x: auto;
 }
 </style>
+@/bzr

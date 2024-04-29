@@ -1,6 +1,6 @@
-# rethink-boards with RethinkID
+# rethink-boards with Bazaar
 
-This project is a Trello-like app which works with RethinkID.
+This project is a Trello-like app which works with Bazaar.
 
 ## Project setup
 

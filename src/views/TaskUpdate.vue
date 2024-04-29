@@ -29,7 +29,7 @@ import useRouterParams from "@/composables/router-params";
 import { Task, ActionPayloadUpdateTask, ActionPayloadDeleteTask } from "@/types";
 
 export default defineComponent({
-  name: "Task",
+  name: "TaskUpdate",
   setup() {
     const store = useStore();
     const route = useRoute();

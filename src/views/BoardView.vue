@@ -29,7 +29,7 @@ import ColumnCreate from "@/components/ColumnCreate.vue";
 import BoardModal from "@/components/BoardModal.vue";
 
 export default defineComponent({
-  name: "Board",
+  name: "BoardView",
   components: {
     ColumnItem,
     ColumnCreate,

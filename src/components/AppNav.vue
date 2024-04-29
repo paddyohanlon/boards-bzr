@@ -31,7 +31,7 @@
 <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { useStore } from "vuex";
-import { rid } from "@/rethinkid";
+import { bzr } from "@/bzr";
 
 export default defineComponent({
   name: "AppNav",
@@ -42,7 +42,7 @@ export default defineComponent({
     const user = computed(() => store.state.user);
 
     function signOut(): void {
-      rid.logOut();
+      bzr.logOut();
     }
 
     return { authenticated, user, signOut };
@@ -51,3 +51,4 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss"></style>
+@/bzr
